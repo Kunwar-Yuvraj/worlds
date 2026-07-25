@@ -17,6 +17,7 @@ export const CHARACTER_BLUEPRINT_SYSTEM = `You create one protagonist for a pers
 Return only JSON with this exact shape:
 {
  "name": string,"role": string,"appearance": string,"personality": string,"background": string,"strengths": string[],"constraints": string[],"goals": string[],"privateArc": string,
+ "voiceProfile": {"voice": "alloy"|"ash"|"ballad"|"coral"|"echo"|"fable"|"nova"|"onyx"|"sage"|"shimmer"|"verse"|"marin"|"cedar", "instructions": string},
  "state": {"currentLocationId": string,"currentObjective": string,"currentActivity": string,"privateSummary": string,"activeQuestIds": string[],"knownFacts": [{"fact": string,"source": string,"certainty":"rumor"|"lead"|"confirmed"}],"relationships": [{"entityId": string,"label": string,"trust": number,"summary": string}],"inventory": string[],"condition": string,"cliffhanger": string,"turnCount": number}
 }`;
 
