@@ -11,10 +11,9 @@ export type Location = { id: string; name: string; description: string; atmosphe
 export type Npc = { id: string; name: string; role: string; appearance: string; personality: string; publicFace: string; currentObjective: string; currentLocationId: string; status: string; publicSummary: string };
 export type PlayerState = { currentLocationId: string; currentObjective: string; currentActivity: string; privateSummary: string; activeQuestIds: string[]; knownFacts: { fact: string; source: string; certainty: 'rumor' | 'lead' | 'confirmed' }[]; relationships: { entityId: string; label: string; trust: number; summary: string }[]; inventory: string[]; condition: string; cliffhanger: string; turnCount: number };
 export type Scene = { id: string; locationId: string; participantIds: string[]; visibleNpcIds: string[]; sharedSummary: string; status: 'active' | 'quiet'; updatedAt?: unknown };
-export type VoiceProfile = { voice: 'alloy' | 'ash' | 'ballad' | 'coral' | 'echo' | 'fable' | 'nova' | 'onyx' | 'sage' | 'shimmer' | 'verse' | 'marin' | 'cedar'; instructions: string };
 
 export type WorldBlueprint = { worldSummary: string; storyState: StoryState; plotThreads: PlotThread[]; hiddenPlot: HiddenPlot; locations: Location[]; npcs: Npc[] };
-export type CharacterBlueprint = { name: string; role: string; appearance: string; personality: string; background: string; strengths: string[]; constraints: string[]; goals: string[]; privateArc: string; voiceProfile: VoiceProfile; state: PlayerState };
+export type CharacterBlueprint = { name: string; role: string; appearance: string; personality: string; background: string; strengths: string[]; constraints: string[]; goals: string[]; privateArc: string; state: PlayerState };
 export type TurnResolution = { narration: string; options: string[]; playerState: PlayerState; sceneEvent: string | null; worldEvent: string | null; storyState: StoryState; plotThreadUpdates: PlotThread[]; npcUpdates: Npc[]; sceneSummary: string | null };
 
 export const STORY_VERSION = 2;
