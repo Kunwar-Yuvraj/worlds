@@ -13,3 +13,20 @@ button, input, textarea, select { font: inherit; }
 .btn { border-radius: 10px; padding: .7rem 1rem; font-weight: 700; transition: .15s; }
 .btn-primary { background: #d7ad62; color: #15100a; } .btn-primary:hover { background: #edd18f; }
 .btn-quiet { border: 1px solid rgba(233,226,212,.25); color: #e9e2d4; } .btn-quiet:hover { background: rgba(255,255,255,.08); }
+.text-gold { color: #d7ad62; }
+.text-mist { color: #e9e2d4; }
+
+/* Cover image banner */
+.world-banner { position: relative; width: 100%; aspect-ratio: 3 / 1; border-radius: 18px; overflow: hidden; background: linear-gradient(135deg, #1a1c2e 0%, #25213a 40%, #18313a 100%); }
+.world-banner img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.world-banner::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, #0b0c12 0%, rgba(11,12,18,0.7) 30%, transparent 60%); pointer-events: none; }
+.world-banner-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 1.5rem 2rem; z-index: 2; }
+
+/* Shimmer loading placeholder */
+@keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+.shimmer { background: linear-gradient(90deg, #151722 25%, #1e2038 37%, #151722 63%); background-size: 800px 100%; animation: shimmer 1.8s ease-in-out infinite; }
+
+/* Cover image thumbnail for cards */
+.world-thumb { width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #1a1c2e 0%, #25213a 50%, #18313a 100%); margin-bottom: 0.75rem; }
+.world-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s ease; }
+.world-thumb:hover img { transform: scale(1.03); }

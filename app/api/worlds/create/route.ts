@@ -27,6 +27,10 @@ export async function POST(request: NextRequest) {
     blueprint.locations.forEach(location => batch.set(worldRef.collection('locations').doc(location.id), location));
     blueprint.npcs.forEach(npc => batch.set(worldRef.collection('npcs').doc(npc.id), npc));
     await batch.commit();
+    // Fire-and-forget: generate cover image in the background
+    const imagePayload = { name: name.trim(), genre: genre.trim(), premise, tone, locations: blueprint.locations.map(l => ({ name: l.name, atmosphere: l.atmosphere })) };
+    const origin = request.nextUrl.origin;
+    fetch(`${origin}/api/worlds/${worldRef.id}/image`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(imagePayload) }).catch(err => console.error('[Image Agent] Background generation failed:', err));
     return NextResponse.json({ worldId: worldRef.id }, { status: 201 });
   } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : 'Unable to create world.' }, { status: 401 }); }
 }
