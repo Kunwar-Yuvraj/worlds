@@ -173,6 +173,51 @@ select.field { color-scheme: dark; }
 .delay-1 { animation-delay: .08s; }
 .delay-2 { animation-delay: .16s; }
 
+/* World-specific cinematic gate */
+.cinematic-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  overflow: hidden;
+  isolation: isolate;
+  background: #020307;
+  animation: cinematic-intro-in .5s both ease-out;
+}
+.cinematic-gate__video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transform: scale(1.012);
+  animation: cinematic-video-settle 7s both ease-out;
+}
+.cinematic-gate__vignette, .cinematic-gate__grain { position: absolute; inset: 0; pointer-events: none; }
+.cinematic-gate__vignette {
+  background:
+    linear-gradient(to bottom, rgba(2,3,7,.52), transparent 28%, transparent 60%, rgba(2,3,7,.78)),
+    radial-gradient(ellipse at center, transparent 35%, rgba(1,2,5,.68) 100%);
+}
+.cinematic-gate__grain { opacity: .12; mix-blend-mode: soft-light; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.75'/%3E%3C/svg%3E"); }
+.cinematic-gate__hud { position: absolute; left: clamp(1.5rem, 7vw, 7rem); bottom: clamp(2rem, 8vh, 5.5rem); max-width: min(36rem, calc(100vw - 3rem)); animation: cinematic-copy-in .75s .15s both cubic-bezier(.2,.8,.2,1); }
+.cinematic-gate__eyebrow { margin: 0 0 .7rem; color: rgba(232,238,255,.78); font-size: .64rem; font-weight: 750; letter-spacing: .26em; text-transform: uppercase; }
+.cinematic-gate__title { margin: 0; color: #fff; font-size: clamp(2.5rem, 7vw, 6.3rem); font-weight: 500; line-height: .88; letter-spacing: -.06em; text-shadow: 0 5px 35px rgba(0,0,0,.65); }
+.cinematic-gate__progress { width: min(12rem, 40vw); height: 2px; margin-top: 1.55rem; overflow: hidden; background: rgba(255,255,255,.25); }
+.cinematic-gate__progress span { display: block; width: 36%; height: 100%; background: #fff; box-shadow: 0 0 14px rgba(214,224,255,.9); animation: cinematic-progress 2.5s infinite ease-in-out; }
+.cinematic-gate__actions { position: absolute; top: clamp(1.3rem, 4vw, 3rem); right: clamp(1.3rem, 4vw, 3rem); display: flex; align-items: center; gap: .75rem; animation: cinematic-copy-in .65s .3s both ease-out; }
+.cinematic-gate__skip, .cinematic-gate__start { border: 1px solid rgba(255,255,255,.24); border-radius: 999px; background: rgba(5,7,14,.44); padding: .62rem .9rem; color: rgba(255,255,255,.93); font-size: .7rem; font-weight: 700; letter-spacing: .03em; backdrop-filter: blur(12px); cursor: pointer; transition: background .2s, transform .2s, border-color .2s; }
+.cinematic-gate__skip:hover, .cinematic-gate__start:hover { border-color: rgba(255,255,255,.64); background: rgba(5,7,14,.68); transform: translateY(-1px); }
+.cinematic-gate__start { border-color: rgba(197,188,255,.75); background: rgba(70,58,144,.62); }
+.cinematic-gate__start span { padding-left: .25rem; font-size: 1rem; line-height: 0; }
+.cinematic-gate--leaving { pointer-events: none; animation: cinematic-intro-out .65s both cubic-bezier(.6,0,.9,.35); }
+@keyframes cinematic-intro-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cinematic-intro-out { from { opacity: 1; filter: blur(0); } to { opacity: 0; filter: blur(7px); } }
+@keyframes cinematic-video-settle { from { opacity: .78; transform: scale(1.06); } to { opacity: 1; transform: scale(1.012); } }
+@keyframes cinematic-copy-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes cinematic-progress { 0% { transform: translateX(-110%); } 60%,100% { transform: translateX(310%); } }
+@media (prefers-reduced-motion: reduce) {
+  .cinematic-gate, .cinematic-gate__video, .cinematic-gate__hud, .cinematic-gate__actions, .cinematic-gate__progress span { animation: none; }
+}
+
 /* Global route transition */
 .route-stage { position: relative; min-height: 100vh; }
 .route-content {
