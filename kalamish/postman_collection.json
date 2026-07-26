@@ -1,0 +1,1471 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+		"name": "AI Novel Writing Platform API",
+		"description": "Complete Postman Collection for testing all 46 API endpoints of the AI Novel Writing Platform backend.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "bearerToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "novel_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "chapter_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "character_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "location_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "timeline_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "outline_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "world_rule_id",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "System",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["health"]
+						},
+						"description": "Check if backend API server is healthy."
+					}
+				},
+				{
+					"name": "Root Welcome",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/",
+							"host": ["{{baseUrl}}"],
+							"path": [""]
+						},
+						"description": "Welcome landing endpoint."
+					}
+				}
+			]
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"author@example.com\",\n  \"password\": \"SecretPass123!\",\n  \"full_name\": \"John Doe\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "register"]
+						},
+						"description": "Register a new user account."
+					}
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.access_token) {",
+									"    pm.collectionVariables.set('bearerToken', jsonData.access_token);",
+									"    console.log('Saved bearerToken:', jsonData.access_token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"author@example.com\",\n  \"password\": \"SecretPass123!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "login"]
+						},
+						"description": "Authenticate user and set collection bearerToken automatically."
+					}
+				},
+				{
+					"name": "Get Current User Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "me"]
+						},
+						"description": "Fetch current authenticated user profile."
+					}
+				},
+				{
+					"name": "Logout User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/logout",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "logout"]
+						},
+						"description": "Logout current user session."
+					}
+				}
+			]
+		},
+		{
+			"name": "Novels",
+			"item": [
+				{
+					"name": "Create Novel",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.id) {",
+									"    pm.collectionVariables.set('novel_id', jsonData.id);",
+									"    console.log('Saved novel_id:', jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Chronicles of Antigravity\",\n  \"genre\": \"Sci-Fi\",\n  \"language\": \"English\",\n  \"tone\": \"Epic\",\n  \"style\": \"Immersive\",\n  \"pov\": \"Third Person Limited\",\n  \"estimated_chapters\": 12\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/novels",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "novels"]
+						},
+						"description": "Create a new novel project."
+					}
+				},
+				{
+					"name": "List Novels",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/novels",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "novels"]
+						},
+						"description": "List all novels owned by authenticated user."
+					}
+				},
+				{
+					"name": "Get Novel by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/novels/{{novel_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "novels", "{{novel_id}}"]
+						},
+						"description": "Retrieve novel metadata by ID."
+					}
+				},
+				{
+					"name": "Update Novel",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Chronicles of Antigravity: Eternal\",\n  \"estimated_chapters\": 15,\n  \"status\": \"active\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/novels/{{novel_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "novels", "{{novel_id}}"]
+						},
+						"description": "Update novel details."
+					}
+				},
+				{
+					"name": "Delete Novel",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/novels/{{novel_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "novels", "{{novel_id}}"]
+						},
+						"description": "Delete a novel project."
+					}
+				}
+			]
+		},
+		{
+			"name": "Chapters",
+			"item": [
+				{
+					"name": "Create Chapter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.id) {",
+									"    pm.collectionVariables.set('chapter_id', jsonData.id);",
+									"    console.log('Saved chapter_id:', jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"chapter_number\": 1,\n  \"title\": \"The Silent Horizon\",\n  \"content\": \"The starship drifted silently past the nebulae of Orion...\",\n  \"summary\": \"Introduction to Captain Leo and the starship.\",\n  \"status\": \"draft\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/novels/{{novel_id}}/chapters",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "novels", "{{novel_id}}", "chapters"]
+						},
+						"description": "Create a new chapter for a novel."
+					}
+				},
+				{
+					"name": "List Chapters for Novel",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/novels/{{novel_id}}/chapters",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "novels", "{{novel_id}}", "chapters"]
+						},
+						"description": "List chapters belonging to a novel."
+					}
+				},
+				{
+					"name": "Get Chapter by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/chapters/{{chapter_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "chapters", "{{chapter_id}}"]
+						},
+						"description": "Get chapter details by ID."
+					}
+				},
+				{
+					"name": "Update Chapter",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"The Silent Horizon (Revised)\",\n  \"content\": \"The starship drifted silently past the nebulae of Orion as Captain Leo monitored the gravity thrusters.\",\n  \"status\": \"completed\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/chapters/{{chapter_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "chapters", "{{chapter_id}}"]
+						},
+						"description": "Update chapter content or title."
+					}
+				},
+				{
+					"name": "Delete Chapter",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/chapters/{{chapter_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "chapters", "{{chapter_id}}"]
+						},
+						"description": "Delete a chapter by ID."
+					}
+				}
+			]
+		},
+		{
+			"name": "Characters",
+			"item": [
+				{
+					"name": "Create Character",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.id) {",
+									"    pm.collectionVariables.set('character_id', jsonData.id);",
+									"    console.log('Saved character_id:', jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Captain Leo Vance\",\n  \"role\": \"protagonist\",\n  \"description\": \"A seasoned space navigator with a mysterious past.\",\n  \"personality_traits\": {\n    \"courage\": \"high\",\n    \"temperament\": \"calm\"\n  },\n  \"backstory\": \"Former commander of the Orbital Defense Guard.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/novels/{{novel_id}}/characters",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "novels", "{{novel_id}}", "characters"]
+						},
+						"description": "Create a character for a novel."
+					}
+				},
+				{
+					"name": "List Characters",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/novels/{{novel_id}}/characters",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "novels", "{{novel_id}}", "characters"]
+						},
+						"description": "List all characters in a novel."
+					}
+				},
+				{
+					"name": "Get Character by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/characters/{{character_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "characters", "{{character_id}}"]
+						},
+						"description": "Get character details."
+					}
+				},
+				{
+					"name": "Update Character",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"description\": \"Promoted to Fleet Admiral Vance.\",\n  \"personality_traits\": {\n    \"courage\": \"extreme\",\n    \"wisdom\": \"high\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/characters/{{character_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "characters", "{{character_id}}"]
+						},
+						"description": "Update character details."
+					}
+				},
+				{
+					"name": "Delete Character",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/characters/{{character_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "characters", "{{character_id}}"]
+						},
+						"description": "Delete a character."
+					}
+				}
+			]
+		},
+		{
+			"name": "Locations",
+			"item": [
+				{
+					"name": "Create Location",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.id) {",
+									"    pm.collectionVariables.set('location_id', jsonData.id);",
+									"    console.log('Saved location_id:', jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Aethelgard Citadel\",\n  \"description\": \"A massive floating fortress orbiting a dying star.\",\n  \"significance\": \"Primary stronghold of the Galactic Council.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/novels/{{novel_id}}/locations",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "novels", "{{novel_id}}", "locations"]
+						},
+						"description": "Create a location for a novel."
+					}
+				},
+				{
+					"name": "List Locations",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/novels/{{novel_id}}/locations",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "novels", "{{novel_id}}", "locations"]
+						},
+						"description": "List locations for a novel."
+					}
+				},
+				{
+					"name": "Get Location by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/locations/{{location_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "locations", "{{location_id}}"]
+						},
+						"description": "Get location details."
+					}
+				},
+				{
+					"name": "Update Location",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"description\": \"A heavily fortified floating citadel with plasma shields.\",\n  \"significance\": \"Capital base of humanity.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/locations/{{location_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "locations", "{{location_id}}"]
+						},
+						"description": "Update location details."
+					}
+				},
+				{
+					"name": "Delete Location",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/locations/{{location_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "locations", "{{location_id}}"]
+						},
+						"description": "Delete a location."
+					}
+				}
+			]
+		},
+		{
+			"name": "Timeline",
+			"item": [
+				{
+					"name": "Create Timeline Event",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.id) {",
+									"    pm.collectionVariables.set('timeline_id', jsonData.id);",
+									"    console.log('Saved timeline_id:', jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event_order\": 1,\n  \"title\": \"The Arrival at Orion Gateway\",\n  \"description\": \"Captain Leo docks at the gateway station.\",\n  \"chapter_id\": \"{{chapter_id}}\",\n  \"impact\": \"Triggers planetary defense lock.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/novels/{{novel_id}}/timeline",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "novels", "{{novel_id}}", "timeline"]
+						},
+						"description": "Create a timeline event for a novel."
+					}
+				},
+				{
+					"name": "List Timeline Events",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/novels/{{novel_id}}/timeline",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "novels", "{{novel_id}}", "timeline"]
+						},
+						"description": "List timeline events."
+					}
+				},
+				{
+					"name": "Get Timeline Event by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/timeline/{{timeline_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "timeline", "{{timeline_id}}"]
+						},
+						"description": "Get timeline event details."
+					}
+				},
+				{
+					"name": "Update Timeline Event",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"description\": \"Captain Leo docks and discovers an unauthorized signal.\",\n  \"impact\": \"Triggers orbital alert level red.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/timeline/{{timeline_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "timeline", "{{timeline_id}}"]
+						},
+						"description": "Update a timeline event."
+					}
+				},
+				{
+					"name": "Delete Timeline Event",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/timeline/{{timeline_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "timeline", "{{timeline_id}}"]
+						},
+						"description": "Delete a timeline event."
+					}
+				}
+			]
+		},
+		{
+			"name": "Outlines",
+			"item": [
+				{
+					"name": "Create Outline",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.id) {",
+									"    pm.collectionVariables.set('outline_id', jsonData.id);",
+									"    console.log('Saved outline_id:', jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"chapter_number\": 1,\n  \"title\": \"Arrival at Gateway\",\n  \"synopsis\": \"Leo enters the spaceport and encounters mysterious AI constructs.\",\n  \"key_events\": [\"Docking\", \"AI Encounter\", \"Discovery of Ancient Artifact\"],\n  \"target_word_count\": 2500\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/novels/{{novel_id}}/outlines",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "novels", "{{novel_id}}", "outlines"]
+						},
+						"description": "Create an outline entry for a novel chapter."
+					}
+				},
+				{
+					"name": "List Outlines",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/novels/{{novel_id}}/outlines",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "novels", "{{novel_id}}", "outlines"]
+						},
+						"description": "List outlines for a novel."
+					}
+				},
+				{
+					"name": "Get Outline by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/outlines/{{outline_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "outlines", "{{outline_id}}"]
+						},
+						"description": "Get outline details."
+					}
+				},
+				{
+					"name": "Update Outline",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"synopsis\": \"Leo enters spaceport, meets co-pilot, and discovers artifact.\",\n  \"target_word_count\": 3000\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/outlines/{{outline_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "outlines", "{{outline_id}}"]
+						},
+						"description": "Update an outline entry."
+					}
+				},
+				{
+					"name": "Delete Outline",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/outlines/{{outline_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "outlines", "{{outline_id}}"]
+						},
+						"description": "Delete an outline entry."
+					}
+				}
+			]
+		},
+		{
+			"name": "World Rules",
+			"item": [
+				{
+					"name": "Create World Rule",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.id) {",
+									"    pm.collectionVariables.set('world_rule_id', jsonData.id);",
+									"    console.log('Saved world_rule_id:', jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"rule_name\": \"Hyperdrive Quantum Core Limitation\",\n  \"category\": \"technology\",\n  \"description\": \"Hyperdrives cannot engage near planetary gravitational wells above 1.5G.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/novels/{{novel_id}}/world-rules",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "novels", "{{novel_id}}", "world-rules"]
+						},
+						"description": "Create a world rule for a novel."
+					}
+				},
+				{
+					"name": "List World Rules",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/novels/{{novel_id}}/world-rules",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "novels", "{{novel_id}}", "world-rules"]
+						},
+						"description": "List all world rules."
+					}
+				},
+				{
+					"name": "Get World Rule by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/world-rules/{{world_rule_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "world-rules", "{{world_rule_id}}"]
+						},
+						"description": "Get world rule details."
+					}
+				},
+				{
+					"name": "Update World Rule",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"description\": \"Hyperdrives cannot engage near gravitational wells above 1.5G without quantum dampening coils.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/world-rules/{{world_rule_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "world-rules", "{{world_rule_id}}"]
+						},
+						"description": "Update a world rule."
+					}
+				},
+				{
+					"name": "Delete World Rule",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/world-rules/{{world_rule_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "world-rules", "{{world_rule_id}}"]
+						},
+						"description": "Delete a world rule."
+					}
+				}
+			]
+		},
+		{
+			"name": "AI Engine",
+			"item": [
+				{
+					"name": "AI Generate Content (LangGraph Workflow)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"novel_id\": \"{{novel_id}}\",\n  \"chapter_id\": \"{{chapter_id}}\",\n  \"user_instruction\": \"Write an exhilarating opening scene where Captain Leo navigates through an asteroid belt.\",\n  \"request_type\": \"GENERATE_CHAPTER\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/ai/generate",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "ai", "generate"]
+						},
+						"description": "Trigger the 7-agent LangGraph orchestration multi-agent workflow to generate chapter text."
+					}
+				},
+				{
+					"name": "AI Rewrite Chapter (Direct LLM)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"chapter_id\": \"{{chapter_id}}\",\n  \"user_instruction\": \"Make the tone more suspenseful and add vivid atmospheric details.\",\n  \"stream\": false\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/ai/rewrite",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "ai", "rewrite"]
+						},
+						"description": "Rewrite chapter content directly using Gemini LLM."
+					}
+				},
+				{
+					"name": "AI Rewrite Chapter (SSE Streaming)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"chapter_id\": \"{{chapter_id}}\",\n  \"user_instruction\": \"Describe the starship entering hyperdrive with rich sensory prose.\",\n  \"stream\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/ai/rewrite",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "ai", "rewrite"]
+						},
+						"description": "Stream rewritten chapter text in real-time using Server-Sent Events (SSE)."
+					}
+				},
+				{
+					"name": "AI Revise Story Across Chapters",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"novel_id\": \"{{novel_id}}\",\n  \"revision_instruction\": \"Ensure Captain Leo's injury is consistently referenced in the dialog.\",\n  \"target_chapter_ids\": [\"{{chapter_id}}\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/ai/revise-story",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "ai", "revise-story"]
+						},
+						"description": "Execute story-wide revisions across multiple chapters simultaneously."
+					}
+				},
+				{
+					"name": "AI Story Chat Assistant",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"novel_id\": \"{{novel_id}}\",\n  \"message\": \"What would be a compelling plot twist for Chapter 2?\",\n  \"history\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Hello AI co-author!\"\n    },\n    {\n      \"role\": \"assistant\",\n      \"content\": \"Greetings! How can I assist with your novel today?\"\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/ai/chat",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "ai", "chat"]
+						},
+						"description": "Brainstorm plot twists, character arcs, and worldbuilding with the AI co-author."
+					}
+				}
+			]
+		},
+		{
+			"name": "Search",
+			"item": [
+				{
+					"name": "Semantic Vector Search",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"novel_id\": \"{{novel_id}}\",\n  \"query\": \"gravity thrusters asteroid belt navigation\",\n  \"limit\": 5\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/search",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "search"]
+						},
+						"description": "Perform pgvector semantic similarity search across stored story embeddings."
+					}
+				}
+			]
+		}
+	]
+}

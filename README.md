@@ -2,9 +2,23 @@
 
 **A persistent multiplayer storytelling engine where every player becomes part of the canon.**
 
-Yggdrasil Worlds is the interactive-story half of **ReactJK**, built for the Pocket FM hackathon. Players can enter a prebuilt scenario or create their own world, cast a protagonist, act through text or live voice, and watch an AI narrator evolve one shared story around everyone.
+Yggdrasil Worlds is the interactive-story half of **ReactJK**, built for the Pocket FM hackathon. Its companion, **Kalamish**, is the creator workspace where authors develop long-form fiction with multi-stage AI orchestration and semantic canon memory. Together they form one story lifecycle: Kalamish writes the universe, and Yggdrasil makes it playable.
 
 Unlike a conventional chatbot, a World remembers. Its setting, rules, locations, NPCs, plot threads, player-specific arcs, and shared consequences are persisted as structured state and used to resolve every new turn.
+
+## Repository layout
+
+```text
+.
+├── app/                 Yggdrasil Next.js application and APIs
+├── components/          Yggdrasil interface and Story Oracle
+├── lib/                 Yggdrasil narrative, auth, and persistence layers
+└── kalamish/
+    ├── backend/         FastAPI, LangGraph agents, Postgres/pgvector memory
+    └── frontend/        React, Vite, Monaco author workspace
+```
+
+The full Kalamish documentation and setup guide live in [`kalamish/README.md`](./kalamish/README.md).
 
 ## What it does
 
