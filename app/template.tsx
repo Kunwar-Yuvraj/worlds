@@ -1,15 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Brand } from '@/components/Brand';
 
-const TRANSITION_DELAY = 360;
+const TRANSITION_DELAY = 180;
 
 export default function RouteTemplate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [leaving, setLeaving] = useState(false);
+  const navigationTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     setLeaving(false);
@@ -26,13 +27,16 @@ export default function RouteTemplate({ children }: { children: React.ReactNode 
 
       event.preventDefault();
       setLeaving(true);
-      window.setTimeout(() => {
+      navigationTimerRef.current = window.setTimeout(() => {
         router.push(`${destination.pathname}${destination.search}${destination.hash}`);
       }, TRANSITION_DELAY);
     }
 
     document.addEventListener('click', followLink, true);
-    return () => document.removeEventListener('click', followLink, true);
+    return () => {
+      document.removeEventListener('click', followLink, true);
+      if (navigationTimerRef.current !== null) window.clearTimeout(navigationTimerRef.current);
+    };
   }, [pathname, router]);
 
   return <div className={`route-stage ${leaving ? 'is-leaving' : ''}`}>

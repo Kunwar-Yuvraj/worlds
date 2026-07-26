@@ -16,11 +16,50 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     const { id } = await params; const uid = await requireUser(request);
     const { password, displayName, background = '', storyIntent = '', appearance = '', personality = '' } = await request.json();
-    const worldRef = db.doc(`worlds/${id}`); const [worldSnap, plotSnap, locationsSnap] = await Promise.all([worldRef.get(), worldRef.collection('privateState').doc('plot').get(), worldRef.collection('locations').get()]);
+    const worldRef = db.doc(`worlds/${id}`); const [worldSnap, plotSnap, locationsSnap, playersSnap] = await Promise.all([worldRef.get(), worldRef.collection('privateState').doc('plot').get(), worldRef.collection('locations').get(), worldRef.collection('players').get()]);
     if (!worldSnap.exists) return NextResponse.json({ error: 'World not found.' }, { status: 404 });
     const world = worldSnap.data()!;
+    if (world.playMode === 'solo' && world.createdBy !== uid) {
+      return NextResponse.json({ error: 'This is a solo run. Start your own copy of the preset to play.' }, { status: 403 });
+    }
     if (world.visibility === 'private' && !(await bcrypt.compare(password ?? '', world.passwordHash))) return NextResponse.json({ error: 'Incorrect password.' }, { status: 403 });
     const playerRef = worldRef.collection('players').doc(uid); if ((await playerRef.get()).exists) return NextResponse.json({ alreadyJoined: true });
+    const requestedName = typeof displayName === 'string' ? displayName.trim() : '';
+    if (requestedName) {
+      const normalizedName = requestedName.normalize('NFKC').toLocaleLowerCase('en-US');
+      const matches = playersSnap.docs.filter(doc => {
+        if (doc.id === uid) return false;
+        const player = doc.data();
+        const existingName = String(player.displayName || player.profile?.name || '').trim();
+        return existingName.normalize('NFKC').toLocaleLowerCase('en-US') === normalizedName;
+      });
+
+      if (matches.length > 1) {
+        return NextResponse.json({ error: 'More than one character has that name. Ask the world owner to rename one before resuming.' }, { status: 409 });
+      }
+
+      if (matches.length === 1) {
+        const previousDoc = matches[0];
+        const previousPlayer = await db.runTransaction(async transaction => {
+          const [latestPrevious, latestCurrent] = await Promise.all([
+            transaction.get(previousDoc.ref),
+            transaction.get(playerRef),
+          ]);
+          if (latestCurrent.exists) return latestCurrent.data();
+          if (!latestPrevious.exists) throw new Error('That character was resumed in another session. Refresh and try again.');
+          const existingPlayer = latestPrevious.data()!;
+          const previousUids = Array.isArray(existingPlayer.previousUids) ? existingPlayer.previousUids : [];
+          transaction.set(playerRef, {
+            ...existingPlayer,
+            previousUids: Array.from(new Set([...previousUids, previousDoc.id])),
+            resumedAt: FieldValue.serverTimestamp(),
+          });
+          transaction.delete(previousDoc.ref);
+          return existingPlayer;
+        });
+        return NextResponse.json({ resumed: true, profile: previousPlayer?.profile });
+      }
+    }
     const locations = locationsSnap.docs.map(doc => doc.data()); const locationIds = locations.map(location => location.id); const entry = locationIds[0];
     const fallback: PlayerState = { currentLocationId: entry, currentObjective: 'Find your place in this world', currentActivity: 'Arriving', privateSummary: 'Your personal story is about to begin.', activeQuestIds: [], knownFacts: [], relationships: [], inventory: [], condition: 'Unharmed', cliffhanger: 'A new world waits to test your resolve.', turnCount: 0 };
     let raw: string;

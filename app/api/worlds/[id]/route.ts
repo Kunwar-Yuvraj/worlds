@@ -12,7 +12,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (!worldSnap.exists) return NextResponse.json({ error: 'World not found.' }, { status: 404 });
     const { passwordHash, nextSequence, createdBy, ...world } = worldSnap.data()!;
     const player = playerSnap.exists ? playerSnap.data() : null;
-    const visibleEvents = eventSnap.docs.reverse().map(doc => ({ id: doc.id, ...doc.data() } as Record<string, unknown> & { id: string })).filter(event => canSeeEvent(event, uid)).slice(-24);
+    const identities = [uid, ...(Array.isArray(player?.previousUids) ? player.previousUids : [])];
+    const visibleEvents = eventSnap.docs.reverse().map(doc => ({ id: doc.id, ...doc.data() } as Record<string, unknown> & { id: string })).filter(event => canSeeEvent(event, identities)).slice(-24);
     const currentSceneId = player?.state?.currentLocationId ? `location-${player.state.currentLocationId}` : null; const sceneSnap = currentSceneId ? await worldRef.collection('scenes').doc(currentSceneId).get() : null;
     return NextResponse.json({ world: { id, ...world }, player, locations: locationsSnap.docs.map(doc => doc.data()), npcs: npcSnap.docs.map(doc => doc.data()), scene: sceneSnap?.exists ? sceneSnap.data() : null, events: visibleEvents });
   } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : 'Unable to load world.' }, { status: 401 }); }

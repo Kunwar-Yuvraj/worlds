@@ -11,10 +11,29 @@ import type { Npc, PlotThread, Scene, StoryState } from '@/lib/story/schema';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
+type ConsultationMessage = { role: 'user' | 'assistant'; content: string };
+
+function cleanConsultation(value: unknown): ConsultationMessage[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+    .map(item => ({
+      role: item.role === 'assistant' ? 'assistant' as const : 'user' as const,
+      content: typeof item.content === 'string' ? item.content.trim().slice(0, 4000) : '',
+    }))
+    .filter(item => item.content)
+    .slice(-120);
+}
+
+export async function GET() {
+  return NextResponse.json({ ready: true });
+}
+
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params; const uid = await requireUser(request); const { action } = await request.json();
+    const { id } = await params; const uid = await requireUser(request); const { action, consultation: rawConsultation } = await request.json();
     if (!action?.trim()) return NextResponse.json({ error: 'An action is required.' }, { status: 400 });
+    const consultation = cleanConsultation(rawConsultation);
     const worldRef = db.doc(`worlds/${id}`); const playerRef = worldRef.collection('players').doc(uid);
     const [worldSnap, plotSnap, playerSnap, locationsSnap, npcSnap, playersSnap, eventSnap] = await Promise.all([worldRef.get(), worldRef.collection('privateState').doc('plot').get(), playerRef.get(), worldRef.collection('locations').get(), worldRef.collection('npcs').get(), worldRef.collection('players').get(), worldRef.collection('events').orderBy('sequenceNumber', 'desc').limit(100).get()]);
     if (!worldSnap.exists) return NextResponse.json({ error: 'World not found.' }, { status: 404 }); if (!playerSnap.exists) return NextResponse.json({ error: 'Join this world before acting.' }, { status: 403 });
@@ -24,17 +43,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const sceneRef = sceneId ? worldRef.collection('scenes').doc(sceneId) : null; const currentScene = sceneRef ? await sceneRef.get() : null;
     const scene = currentScene?.exists ? currentScene.data() as Scene : null;
     const relevantNpcs = npcSnap.docs.map(doc => doc.data() as Npc).filter(npc => npc.currentLocationId === state.currentLocationId || scene?.visibleNpcIds?.includes(npc.id)).slice(0, 8);
-    const visibleEvents = eventSnap.docs.map(doc => doc.data() as Record<string, unknown>).filter(event => canSeeEvent(event, uid)).reverse().slice(-16);
+    const identities = [uid, ...(Array.isArray(player.previousUids) ? player.previousUids : [])];
+    const visibleEvents = eventSnap.docs.map(doc => doc.data() as Record<string, unknown>).filter(event => canSeeEvent(event, identities)).reverse().slice(-16);
     const publicEvents = visibleEvents.filter(event => event.scope === 'world').slice(-8);
-    const privateEvents = visibleEvents.filter(event => event.scope === 'private' && Array.isArray(event.audienceIds) && event.audienceIds.includes(uid)).slice(-8);
+    const privateEvents = visibleEvents.filter(event => {
+      const audience = Array.isArray(event.audienceIds) ? event.audienceIds : [];
+      return event.scope === 'private' && identities.some(identity => audience.includes(identity));
+    }).slice(-8);
     let raw: string;
-    try { raw = await callLLM({ systemPrompt: TURN_RESOLUTION_SYSTEM, userPrompt: `PUBLIC WORLD:\n${JSON.stringify({ name: world.name, genre: world.genre, parameters: world.worldParameters, storyState: world.storyState, plotThreads: world.plotThreads })}\n\nSERVER-ONLY PLOT TRUTH:\n${JSON.stringify(plotSnap.data() || {})}\n\nACTING PROTAGONIST:\n${JSON.stringify({ id: uid, profile: player.profile, state })}\n\nCURRENT LOCATION:\n${JSON.stringify(locations.find(location => location.id === state.currentLocationId))}\n\nPUBLIC NPCS AT OR RELEVANT TO THIS LOCATION:\n${JSON.stringify(relevantNpcs)}\n\nOTHER PROTAGONISTS IN THE SAME SCENE (public details only):\n${JSON.stringify(coLocated)}\n\nSHARED SCENE:\n${JSON.stringify(scene)}\n\nRECENT WORLD/SCENE EVENTS VISIBLE TO THIS PLAYER:\n${JSON.stringify(publicEvents)}\n\nRECENT PRIVATE EVENTS FOR THIS PLAYER:\n${JSON.stringify(privateEvents)}\n\nACTION:\n${action.trim()}`, json: true }); } catch { return NextResponse.json({ error: 'Narrator unavailable or rate-limited. Your action was not saved; wait a moment and retry.' }, { status: 503 }); }
+    try { raw = await callLLM({ systemPrompt: TURN_RESOLUTION_SYSTEM, userPrompt: `PUBLIC WORLD:\n${JSON.stringify({ name: world.name, genre: world.genre, parameters: world.worldParameters, storyState: world.storyState, plotThreads: world.plotThreads })}\n\nSERVER-ONLY PLOT TRUTH:\n${JSON.stringify(plotSnap.data() || {})}\n\nACTING PROTAGONIST:\n${JSON.stringify({ id: uid, profile: player.profile, state })}\n\nCURRENT LOCATION:\n${JSON.stringify(locations.find(location => location.id === state.currentLocationId))}\n\nPUBLIC NPCS AT OR RELEVANT TO THIS LOCATION:\n${JSON.stringify(relevantNpcs)}\n\nOTHER PROTAGONISTS IN THE SAME SCENE (public details only):\n${JSON.stringify(coLocated)}\n\nSHARED SCENE:\n${JSON.stringify(scene)}\n\nRECENT WORLD/SCENE EVENTS VISIBLE TO THIS PLAYER:\n${JSON.stringify(publicEvents)}\n\nRECENT PRIVATE EVENTS FOR THIS PLAYER:\n${JSON.stringify(privateEvents)}${consultation.length ? `\n\nPRIVATE PRE-TURN CONSULTATION:\n${JSON.stringify(consultation)}\nThis transcript is private deliberation, not canon and not a sequence of completed actions. Infer the player's final agreed intention from the entire conversation, especially when the last utterance is only a confirmation such as "yes" or "let's do it". Resolve that one intended action now.` : ''}\n\nFINAL ACTION TO RESOLVE:\n${action.trim()}`, json: true }); } catch { return NextResponse.json({ error: 'Narrator unavailable or rate-limited. Your action was not saved; wait a moment and retry.' }, { status: 503 }); }
     let parsed: unknown; try { parsed = JSON.parse(raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()); } catch { return NextResponse.json({ error: 'Narrator returned invalid story data. Your action was not saved; please retry.' }, { status: 502 }); }
     const resolution = turnResolution(parsed, state, world.storyState as StoryState, locationIds); if (!resolution) return NextResponse.json({ error: 'Narrator returned incomplete state. Your action was not saved; please retry.' }, { status: 502 });
     const updatedThreads = (world.plotThreads as PlotThread[]).map(thread => resolution.plotThreadUpdates.find(update => update.id === thread.id) || thread);
     const nextStoryState = resolution.worldEvent ? resolution.storyState : { ...world.storyState, currentTime: resolution.storyState.currentTime || world.storyState.currentTime, activeThreadIds: updatedThreads.filter(thread => thread.status === 'active').map(thread => thread.id) };
     await appendStoryEvent(id, { type: 'action', content: `${player.profile.name}: ${action.trim()}`, scope: 'private', actorId: uid, audienceIds: [uid], payload: { locationId: state.currentLocationId } });
-    await appendStoryEvent(id, { type: 'narration', content: resolution.narration, scope: 'private', actorId: uid, audienceIds: [uid], payload: { cliffhanger: resolution.playerState.cliffhanger } });
+    await appendStoryEvent(id, { type: 'narration', content: resolution.narration, scope: 'private', actorId: uid, audienceIds: [uid], optionsOffered: resolution.options, payload: { cliffhanger: resolution.playerState.cliffhanger } });
     if (sceneId && resolution.sceneEvent) await appendStoryEvent(id, { type: 'scene', content: resolution.sceneEvent, scope: 'scene', actorId: uid, audienceIds: participantIds, sceneId, payload: { locationId: state.currentLocationId } });
     if (resolution.worldEvent) await appendStoryEvent(id, { type: 'world', content: resolution.worldEvent, scope: 'world', actorId: uid, payload: { currentTime: nextStoryState.currentTime } });
     const batch = db.batch(); batch.update(playerRef, { state: resolution.playerState, updatedAt: FieldValue.serverTimestamp() }); batch.update(worldRef, { storyState: nextStoryState, plotThreads: updatedThreads, turnCount: (world.turnCount || 0) + 1, updatedAt: FieldValue.serverTimestamp() });

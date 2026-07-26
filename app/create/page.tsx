@@ -107,7 +107,7 @@ export default function CreatePage() {
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error);
-      router.push(`/world/${body.worldId}`);
+      router.push(`/yaggdrasil/world/${body.worldId}`);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not create this world.');
     } finally {
@@ -118,7 +118,7 @@ export default function CreatePage() {
   return <main className="app-shell min-h-screen pb-20">
     <nav className="page-wrap flex items-center justify-between py-6">
       <Brand />
-      <Link href="/join" className="text-link flex items-center gap-2 text-xs">Explore instead <ArrowIcon /></Link>
+      <Link href="/yaggdrasil/join" className="text-link flex items-center gap-2 text-xs">Explore instead <ArrowIcon /></Link>
     </nav>
 
     <header className="page-wrap border-b border-white/[.08] pb-9 pt-10">

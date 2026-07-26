@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const CINEMATIC_WORLD_ID = 'bVtRf0apwnbFtc6ZoPZZ';
-const EXIT_DURATION_MS = 650;
+const EXIT_DURATION_MS = 280;
 
 export default function WorldCinematicIntro({
   worldId,
@@ -14,6 +14,7 @@ export default function WorldCinematicIntro({
 }) {
   const shouldPlay = worldId === CINEMATIC_WORLD_ID;
   const videoRef = useRef<HTMLVideoElement>(null);
+  const exitTimerRef = useRef<number | null>(null);
   const [showIntro, setShowIntro] = useState(shouldPlay);
   const [isLeaving, setIsLeaving] = useState(false);
   const [needsStart, setNeedsStart] = useState(false);
@@ -21,7 +22,7 @@ export default function WorldCinematicIntro({
   const finish = useCallback(() => {
     if (isLeaving) return;
     setIsLeaving(true);
-    window.setTimeout(() => setShowIntro(false), EXIT_DURATION_MS);
+    exitTimerRef.current = window.setTimeout(() => setShowIntro(false), EXIT_DURATION_MS);
   }, [isLeaving]);
 
   const playWithSound = useCallback(async () => {
@@ -43,6 +44,10 @@ export default function WorldCinematicIntro({
     void playWithSound();
   }, [playWithSound, showIntro]);
 
+  useEffect(() => () => {
+    if (exitTimerRef.current !== null) window.clearTimeout(exitTimerRef.current);
+  }, []);
+
   if (!showIntro) return <>{children}</>;
 
   return (
@@ -52,7 +57,7 @@ export default function WorldCinematicIntro({
         className="cinematic-gate__video"
         autoPlay
         playsInline
-        preload="auto"
+        preload="metadata"
         onEnded={finish}
         onError={() => setNeedsStart(true)}
       >

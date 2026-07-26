@@ -6,4 +6,79 @@ import { PRESETS } from '@/lib/presets';
 import { STORY_VERSION, normalizeId } from '@/lib/story/schema';
 
 export const runtime = 'nodejs';
-export async function POST(request: NextRequest) { try { const uid = await requireUser(request); const { presetName } = await request.json(); const preset = PRESETS.find(item => item.name === presetName); if (!preset) return NextResponse.json({ error: 'Preset not found.' }, { status: 404 }); const worldRef = db.collection('worlds').doc(); const hubId = 'central-district'; const edgeId = 'outer-district'; const threadId = `${normalizeId(preset.name)}-opening`; const batch = db.batch(); batch.set(worldRef, { schemaVersion: STORY_VERSION, name: preset.name, genre: preset.genre, visibility: 'public', passwordHash: null, worldParameters: { premise: preset.seedContext, tone: 'Tense, cinematic, character-led', powerSystem: 'Grounded capabilities shaped by the setting rules.', hardRules: [preset.rulesText], factions: ['The establishment', 'Those who profit in the shadows'], startingPressure: 'A dangerous opening incident demands attention.', playerProtocol: 'Every player owns a private protagonist arc; meetings occur only through shared places and visible consequences.', storyProtocol: 'Claims are leads until verified; secrets remain private; visible actions become shared canon.', rulesText: preset.rulesText }, worldSummary: preset.seedContext, storyState: { currentTime: 'Opening night', publicSummary: preset.seedContext, currentSituation: 'An opening crisis is unfolding.', activeThreadIds: [threadId] }, plotThreads: [{ id: threadId, title: 'The opening crisis', status: 'active', publicSummary: 'Something important has disturbed the balance of the world.', stakes: 'The world will change depending on who acts first.' }], createdBy: uid, createdAt: FieldValue.serverTimestamp(), turnCount: 0, nextSequence: 1 }); batch.set(worldRef.collection('privateState').doc('plot'), { premise: preset.seedContext, hiddenTruth: 'The opening incident has a deliberate cause that can be discovered through evidence and consequence.', secrets: ['Several factions know different fragments of the truth.'], plannedReversals: ['A trusted explanation will prove incomplete.'], integritySummary: 'Keep the opening incident, locations, and faction conflict consistent.' }); batch.set(worldRef.collection('locations').doc(hubId), { id: hubId, name: 'Central District', description: 'The crowded heart of the setting, where rumors travel quickly.', atmosphere: 'Tense and watchful', publicState: 'Everyone is reacting to the opening crisis.', connectedLocationIds: [edgeId] }); batch.set(worldRef.collection('locations').doc(edgeId), { id: edgeId, name: 'Outer District', description: 'A quieter edge of the world where private deals are made.', atmosphere: 'Uncertain and exposed', publicState: 'A place to disappear or uncover a lead.', connectedLocationIds: [hubId] }); batch.set(worldRef.collection('npcs').doc('mara-vale'), { id: 'mara-vale', name: 'Mara Vale', role: 'Well-connected fixer', appearance: 'Immaculate coat, tired eyes, and a deliberate smile.', personality: 'Observant, pragmatic, never entirely sincere.', publicFace: 'A useful guide to the city.', currentObjective: 'Keep the opening crisis from exposing her clients.', currentLocationId: hubId, status: 'active', publicSummary: 'Mara seems to know which doors open after dark.' }); batch.set(worldRef.collection('npcs').doc('arun-das'), { id: 'arun-das', name: 'Arun Das', role: 'Local witness', appearance: 'Rain-spotted clothes and ink-stained fingers.', personality: 'Nervous, principled, evasive under pressure.', publicFace: 'A harmless observer.', currentObjective: 'Stay alive long enough to decide whom to trust.', currentLocationId: hubId, status: 'active', publicSummary: 'Arun saw more than he is saying.' }); await batch.commit(); return NextResponse.json({ worldId: worldRef.id }, { status: 201 }); } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : 'Unable to create preset.' }, { status: 401 }); } }
+
+export async function POST(request: NextRequest) {
+  try {
+    const uid = await requireUser(request);
+    const { presetName, playMode } = await request.json();
+    const preset = PRESETS.find(item => item.name === presetName);
+
+    if (!preset) return NextResponse.json({ error: 'Preset not found.' }, { status: 404 });
+    if (!['solo', 'group'].includes(playMode)) {
+      return NextResponse.json({ error: 'Choose whether this run is solo or multiplayer.' }, { status: 400 });
+    }
+
+    const worldRef = db.collection('worlds').doc();
+    const threadId = `${normalizeId(preset.name)}-opening`;
+    const isGroup = playMode === 'group';
+    const playerProtocol = isGroup
+      ? 'This is a cooperative run. Every player owns one protagonist and private perspective. Players share facts only through visible actions, dialogue, or deliberate clue-sharing; shared scenes update everyone present.'
+      : 'This is a solo run. The protagonist retains full agency while NPC companions fill useful missing roles. Companions may advise, disagree, or help, but never make the protagonist’s defining choice.';
+    const batch = db.batch();
+
+    batch.set(worldRef, {
+      schemaVersion: STORY_VERSION,
+      name: preset.name,
+      genre: preset.genre,
+      playMode,
+      visibility: isGroup ? 'public' : 'unlisted',
+      passwordHash: null,
+      worldParameters: {
+        premise: preset.seedContext,
+        tone: preset.tone,
+        powerSystem: preset.powerSystem,
+        hardRules: preset.hardRules,
+        factions: preset.factions,
+        startingPressure: preset.startingPressure,
+        playerProtocol,
+        storyProtocol: preset.storyProtocol,
+        rulesText: preset.rulesText,
+      },
+      worldSummary: preset.seedContext,
+      storyState: {
+        currentTime: preset.currentTime,
+        publicSummary: preset.seedContext,
+        currentSituation: preset.currentSituation,
+        activeThreadIds: [threadId],
+      },
+      plotThreads: [{
+        id: threadId,
+        title: preset.openingThread.title,
+        status: 'active',
+        publicSummary: preset.openingThread.publicSummary,
+        stakes: preset.openingThread.stakes,
+      }],
+      createdBy: uid,
+      createdAt: FieldValue.serverTimestamp(),
+      turnCount: 0,
+      nextSequence: 1,
+    });
+
+    batch.set(worldRef.collection('privateState').doc('plot'), {
+      premise: preset.seedContext,
+      ...preset.hiddenPlot,
+    });
+
+    preset.locations.forEach(location => {
+      batch.set(worldRef.collection('locations').doc(location.id), location);
+    });
+    preset.npcs.forEach(npc => {
+      batch.set(worldRef.collection('npcs').doc(npc.id), npc);
+    });
+
+    await batch.commit();
+    return NextResponse.json({ worldId: worldRef.id, playMode }, { status: 201 });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unable to create preset.' }, { status: 401 });
+  }
+}

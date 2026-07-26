@@ -16,21 +16,25 @@ export async function callLLM({
   systemPrompt,
   userPrompt,
   json = false,
+  maxOutputTokens,
 }: {
   systemPrompt: string;
   userPrompt: string;
   json?: boolean;
+  maxOutputTokens?: number;
 }): Promise<string> {
   const provider = process.env.LLM_PROVIDER ?? 'gemini';
 
   if (provider === 'openai') {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const result = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
+      model: process.env.OPENAI_MODEL ?? 'gpt-5.6-luna',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
+      reasoning_effort: 'low',
+      ...(maxOutputTokens ? { max_completion_tokens: maxOutputTokens } : {}),
       ...(json ? { response_format: { type: 'json_object' } } : {}),
     });
     return result.choices[0]?.message.content ?? '';
@@ -57,6 +61,7 @@ export async function callLLM({
         contents: userPrompt,
         config: {
           systemInstruction: systemPrompt,
+          ...(maxOutputTokens ? { maxOutputTokens } : {}),
           ...(json ? { responseMimeType: 'application/json' } : {}),
         },
       });
