@@ -70,29 +70,54 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         type: event.type, scope: event.scope, actorId: event.actorId, content: event.content,
         optionsOffered: event.optionsOffered, payload: event.payload,
       }));
-    const nearbyNpcs = npcSnap.docs
-      .map(doc => ({ id: doc.id, ...doc.data() } as Record<string, any>))
-      .filter(npc => npc.currentLocationId === state.currentLocationId)
-      .map(({ id: npcId, name, role, publicFace, publicSummary, currentLocationId }) => ({
-        id: npcId, name, role, publicFace, publicSummary, currentLocationId,
-      }));
+    const publicNpcs = npcSnap.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as Record<string, any>));
+    const nearbyNpcs = publicNpcs.filter(npc => npc.currentLocationId === state.currentLocationId);
     const nearbyPlayers = playersSnap.docs
       .filter(doc => doc.id !== uid && doc.data().state?.currentLocationId === state.currentLocationId)
-      .map(doc => ({ id: doc.id, profile: doc.data().profile, publicState: doc.data().state }));
+      .map(doc => {
+        const other = doc.data();
+        return {
+          id: doc.id,
+          profile: other.profile,
+          observableState: {
+            currentLocationId: other.state?.currentLocationId,
+            currentActivity: other.state?.currentActivity,
+            condition: other.state?.condition,
+          },
+        };
+      });
     const sceneId = state.currentLocationId ? `location-${state.currentLocationId}` : null;
     const sceneSnap = sceneId ? await worldRef.collection('scenes').doc(sceneId).get() : null;
     const context = {
       world: {
         name: world.name,
         genre: world.genre,
-        rules: world.rulesText,
+        rules: world.rulesText ?? world.worldParameters?.rulesText,
+        foundingSummary: world.worldSummary,
         mainMemory: world.mainContext ?? world.worldSummary,
         parameters: world.worldParameters,
         storyState: world.storyState,
         plotThreads: world.plotThreads,
         turnCount: world.turnCount,
       },
-      protagonist: { profile: player.profile, state },
+      protagonist: {
+        profile: player.profile,
+        state,
+        personalStoryline: {
+          privateArc: player.profile?.privateArc,
+          goals: player.profile?.goals,
+          privateSummary: state.privateSummary,
+          currentObjective: state.currentObjective,
+          currentActivity: state.currentActivity,
+          knownFacts: state.knownFacts,
+          relationships: state.relationships,
+          inventory: state.inventory,
+          condition: state.condition,
+          cliffhanger: state.cliffhanger,
+        },
+      },
+      worldAtlas: { locations, publicCharacters: publicNpcs },
       currentLocation,
       nearbyCharacters: { nonPlayerCharacters: nearbyNpcs, otherProtagonists: nearbyPlayers },
       sharedScene: sceneSnap?.exists ? sceneSnap.data() : null,

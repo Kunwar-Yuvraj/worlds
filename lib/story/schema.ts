@@ -14,7 +14,7 @@ export type Scene = { id: string; locationId: string; participantIds: string[]; 
 
 export type WorldBlueprint = { worldSummary: string; storyState: StoryState; plotThreads: PlotThread[]; hiddenPlot: HiddenPlot; locations: Location[]; npcs: Npc[] };
 export type CharacterBlueprint = { name: string; role: string; appearance: string; personality: string; background: string; strengths: string[]; constraints: string[]; goals: string[]; privateArc: string; state: PlayerState };
-export type TurnResolution = { narration: string; options: string[]; playerState: PlayerState; sceneEvent: string | null; worldEvent: string | null; storyState: StoryState; plotThreadUpdates: PlotThread[]; npcUpdates: Npc[]; sceneSummary: string | null };
+export type TurnResolution = { narration: string; options: string[]; playerState: PlayerState; mainContext: string; sceneEvent: string | null; worldEvent: string | null; storyState: StoryState; plotThreadUpdates: PlotThread[]; npcUpdates: Npc[]; sceneSummary: string | null };
 
 export const STORY_VERSION = 2;
 export const normalizeId = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 48) || 'unknown';

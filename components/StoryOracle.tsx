@@ -130,7 +130,6 @@ export function StoryOracle({
           type: 'response.create',
           response: {
             output_modalities: ['audio'],
-            instructions: 'Give a concise 1-2 sentence recap of the protagonist’s location, latest event, and immediate pressure using concrete canon—never generic scene-setting. Then invite them to speak. Accept their actions, continue the scene, and use genre-aware nudges only when helpful instead of interviewing them.',
           },
         }));
       });

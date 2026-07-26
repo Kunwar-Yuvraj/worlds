@@ -1,0 +1,84 @@
+bundle:
+  name: yggdrasil-worlds
+
+sync:
+  exclude:
+    - .env*
+    - .git/**
+    - .next/**
+    - node_modules/**
+    - outputs/**
+    - tmp/**
+    - '*.log'
+    - tsconfig.tsbuildinfo
+
+resources:
+  apps:
+    yggdrasil:
+      name: yggdrasil-worlds
+      description: Multiplayer, LLM-driven interactive story worlds.
+      source_code_path: .
+      permissions:
+        - group_name: users
+          level: CAN_USE
+      resources:
+        - name: firebase_service_account
+          description: Firebase Admin service account JSON.
+          secret:
+            scope: yggdrasil-worlds
+            key: firebase-service-account
+            permission: READ
+        - name: firebase_api_key
+          description: Firebase web API key.
+          secret:
+            scope: yggdrasil-worlds
+            key: firebase-api-key
+            permission: READ
+        - name: firebase_auth_domain
+          description: Firebase Auth domain.
+          secret:
+            scope: yggdrasil-worlds
+            key: firebase-auth-domain
+            permission: READ
+        - name: firebase_project_id
+          description: Firebase project ID.
+          secret:
+            scope: yggdrasil-worlds
+            key: firebase-project-id
+            permission: READ
+        - name: firebase_app_id
+          description: Firebase web app ID.
+          secret:
+            scope: yggdrasil-worlds
+            key: firebase-app-id
+            permission: READ
+        - name: llm_provider
+          description: Active LLM provider.
+          secret:
+            scope: yggdrasil-worlds
+            key: llm-provider
+            permission: READ
+        - name: gemini_api_key
+          description: Gemini API key.
+          secret:
+            scope: yggdrasil-worlds
+            key: gemini-api-key
+            permission: READ
+        - name: gemini_model
+          description: Gemini model name.
+          secret:
+            scope: yggdrasil-worlds
+            key: gemini-model
+            permission: READ
+        - name: openai_api_key
+          description: OpenAI API key.
+          secret:
+            scope: yggdrasil-worlds
+            key: openai-api-key
+            permission: READ
+        - name: tts_model
+          description: OpenAI text-to-speech model.
+          secret:
+            scope: yggdrasil-worlds
+            key: tts-model
+            permission: READ

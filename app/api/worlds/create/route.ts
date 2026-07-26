@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const blueprint = worldBlueprint(JSON.parse(raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()));
     if (!blueprint) return NextResponse.json({ error: 'The world architect returned an incomplete blueprint. Please retry.' }, { status: 502 });
     const worldRef = db.collection('worlds').doc(); const batch = db.batch();
-    batch.set(worldRef, { schemaVersion: STORY_VERSION, name: name.trim(), genre: genre.trim(), visibility, passwordHash: visibility === 'private' ? await bcrypt.hash(password, 10) : null, worldParameters: { premise, tone, powerSystem, hardRules, factions, startingPressure, playerProtocol, storyProtocol, rulesText }, worldSummary: blueprint.worldSummary, storyState: blueprint.storyState, plotThreads: blueprint.plotThreads, createdBy: uid, createdAt: FieldValue.serverTimestamp(), turnCount: 0, nextSequence: 1 });
+    batch.set(worldRef, { schemaVersion: STORY_VERSION, name: name.trim(), genre: genre.trim(), visibility, passwordHash: visibility === 'private' ? await bcrypt.hash(password, 10) : null, worldParameters: { premise, tone, powerSystem, hardRules, factions, startingPressure, playerProtocol, storyProtocol, rulesText }, worldSummary: blueprint.worldSummary, mainContext: blueprint.worldSummary, storyState: blueprint.storyState, plotThreads: blueprint.plotThreads, createdBy: uid, createdAt: FieldValue.serverTimestamp(), turnCount: 0, nextSequence: 1 });
     batch.set(worldRef.collection('privateState').doc('plot'), blueprint.hiddenPlot);
     blueprint.locations.forEach(location => batch.set(worldRef.collection('locations').doc(location.id), location));
     blueprint.npcs.forEach(npc => batch.set(worldRef.collection('npcs').doc(npc.id), npc));

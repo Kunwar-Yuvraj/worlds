@@ -38,6 +38,7 @@ type Data = {
     genre: string;
     visibility: string;
     worldSummary: string;
+    mainContext?: string;
     storyState: { currentTime: string; publicSummary: string; currentSituation: string };
     worldParameters: { premise: string; tone: string; powerSystem: string; hardRules: string[]; factions: string[] };
     plotThreads: { id: string; title: string; status: string; publicSummary: string; stakes: string }[];

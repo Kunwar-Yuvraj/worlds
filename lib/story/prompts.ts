@@ -31,11 +31,14 @@ Rules:
 - worldEvent is only for facts visible beyond the scene. Otherwise return null.
 - Format narration for comfortable reading: use 2-4 short paragraphs separated by blank lines, place important spoken dialogue in its own paragraph, and avoid dense walls of text.
 - Always return a complete replacement playerState and complete replacement storyState. Retain important facts, objectives, NPC relationships, condition, and cliffhanger while updating what changed.
+- Always return a complete replacement mainContext. It is the compact, player-visible canonical memory shared by the world: retain established facts, named characters and places, consequential past actions, the current situation, unresolved public threads, and public world/scene changes. Fold this turn's public consequences into it. Do not include server-only truth, another player's secrets, private deliberation, or provisional narration that was not committed.
+- The acting protagonist's complete personal storyline belongs in playerState.privateSummary and related playerState fields. Carry their arc, discoveries, relationships, possessions, condition, objective, and cliffhanger forward even when the public world does not change.
 - Generate tense, specific narration with agency, meaningful options, consequences, NPC personality, and a hook. Never use generic filler like “an unseen force adjusts its plans.”
 
 Return only JSON with this exact shape:
 {
  "narration": string,"options": string[],"playerState": {"currentLocationId": string,"currentObjective": string,"currentActivity": string,"privateSummary": string,"activeQuestIds": string[],"knownFacts": [{"fact": string,"source": string,"certainty":"rumor"|"lead"|"confirmed"}],"relationships": [{"entityId": string,"label": string,"trust": number,"summary": string}],"inventory": string[],"condition": string,"cliffhanger": string,"turnCount": number},
+ "mainContext": string,
  "sceneEvent": string | null,"worldEvent": string | null,
  "storyState": {"currentTime": string,"publicSummary": string,"currentSituation": string,"activeThreadIds": string[]},
  "plotThreadUpdates": [{"id": string,"title": string,"status":"active"|"dormant"|"resolved","publicSummary": string,"stakes": string}],

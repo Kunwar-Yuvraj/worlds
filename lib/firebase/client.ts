@@ -6,5 +6,5 @@ export async function authHeader() {
   const app = getApps().length ? getApp() : initializeApp(config);
   const auth = getAuth(app);
   const user = auth.currentUser ?? (await signInAnonymously(auth)).user;
-  return { Authorization: `Bearer ${await user.getIdToken()}` };
+  return { 'X-Firebase-Auth': await user.getIdToken() };
 }

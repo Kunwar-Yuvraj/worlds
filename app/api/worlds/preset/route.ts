@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
         rulesText: preset.rulesText,
       },
       worldSummary: preset.seedContext,
+      mainContext: preset.seedContext,
       storyState: {
         currentTime: preset.currentTime,
         publicSummary: preset.seedContext,
