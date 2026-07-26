@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Brand } from '@/components/Brand';
 
@@ -11,6 +11,27 @@ export default function RouteTemplate({ children }: { children: React.ReactNode 
   const router = useRouter();
   const [leaving, setLeaving] = useState(false);
   const navigationTimerRef = useRef<number | null>(null);
+
+  // Route transitions keep this template mounted long enough for the browser to
+  // retain the previous page's scroll position. Every new screen starts at top.
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    const previousBehavior = root.style.scrollBehavior;
+
+    root.style.scrollBehavior = 'auto';
+    window.scrollTo(0, 0);
+    document.body.scrollTop = 0;
+    root.scrollTop = 0;
+
+    const restoreBehavior = window.requestAnimationFrame(() => {
+      root.style.scrollBehavior = previousBehavior;
+    });
+
+    return () => {
+      window.cancelAnimationFrame(restoreBehavior);
+      root.style.scrollBehavior = previousBehavior;
+    };
+  }, [pathname]);
 
   useEffect(() => {
     setLeaving(false);

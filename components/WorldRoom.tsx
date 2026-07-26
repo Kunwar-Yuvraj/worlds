@@ -521,9 +521,9 @@ function CharacterEntry({
   onJoin: () => void;
 }) {
   const update = (key: keyof JoinState, value: string) => setJoin(current => ({ ...current, [key]: value }));
-  return <main className="app-shell min-h-screen pb-16">
+  return <main className="app-shell flex min-h-screen flex-col">
     <nav className="page-wrap flex items-center justify-between py-6"><Brand /><Link href="/yaggdrasil/join" className="text-link flex items-center gap-2 text-xs">Back to library <ArrowIcon /></Link></nav>
-    <div className="page-wrap grid min-h-[calc(100vh-90px)] items-center gap-12 py-10 lg:grid-cols-[.9fr_1.1fr]">
+    <div className="page-wrap grid flex-1 items-center gap-12 py-10 lg:grid-cols-[.9fr_1.1fr]">
       <section className="max-w-xl">
         <div className="flex items-center gap-3"><span className="h-px w-9 bg-[#8b7cff]" /><p className="eyebrow">{data.world.genre}</p></div>
         <h1 className="mt-6 text-5xl font-semibold leading-[.95] tracking-[-.06em] sm:text-6xl">{data.world.name}</h1>

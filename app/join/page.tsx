@@ -1,14 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authHeader } from '@/lib/firebase/client';
 import { PRESETS } from '@/lib/presets';
 import type { WorldPreset } from '@/lib/presets';
+import { PRESET_TRAILERS } from '@/lib/preset-trailers';
 import { ArrowIcon, Brand } from '@/components/Brand';
+import PresetCinematicTrailer from '@/components/PresetCinematicTrailer';
 
 type Listed = { id: string; name: string; genre: string; rulesText: string; turnCount: number };
+type PresetChoice = { preset: WorldPreset; playMode: 'solo' | 'group' };
 
 const cardAtmospheres = [
   'from-[#292454] via-[#14172d] to-[#0d111b]',
@@ -26,6 +29,31 @@ export default function JoinPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [selectedPreset, setSelectedPreset] = useState<WorldPreset | null>(null);
+  const [trailerChoice, setTrailerChoice] = useState<PresetChoice | null>(null);
+
+  // The app-wide route animation can leave the browser's saved scroll position
+  // intact on a direct reload. The library should always open at its beginning.
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    const previousBehavior = root.style.scrollBehavior;
+    const previousRestoration = window.history.scrollRestoration;
+
+    root.style.scrollBehavior = 'auto';
+    window.history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
+    document.body.scrollTop = 0;
+    root.scrollTop = 0;
+
+    const restoreBehavior = window.requestAnimationFrame(() => {
+      root.style.scrollBehavior = previousBehavior;
+    });
+
+    return () => {
+      window.cancelAnimationFrame(restoreBehavior);
+      root.style.scrollBehavior = previousBehavior;
+      window.history.scrollRestoration = previousRestoration;
+    };
+  }, []);
 
   useEffect(() => {
     fetch('/api/worlds')
@@ -51,6 +79,21 @@ export default function JoinPage() {
       setError(caught instanceof Error ? caught.message : 'Unable to open that world.');
       setBusy('');
     }
+  }
+
+  function choosePreset(preset: WorldPreset, playMode: 'solo' | 'group') {
+    if (PRESET_TRAILERS[preset.name]) {
+      setTrailerChoice({ preset, playMode });
+      return;
+    }
+    void openPreset(preset.name, playMode);
+  }
+
+  function completeTrailer() {
+    const choice = trailerChoice;
+    if (!choice) return;
+    setTrailerChoice(null);
+    void openPreset(choice.preset.name, choice.playMode);
   }
 
   return <main className="app-shell min-h-screen pb-24">
@@ -140,13 +183,13 @@ export default function JoinPage() {
           </div>
         </div>
         <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-6">
-          <button disabled={!!busy} onClick={() => openPreset(selectedPreset.name, 'solo')} className="group rounded-[20px] border border-white/[.09] bg-white/[.025] p-5 text-left transition hover:-translate-y-0.5 hover:border-[#8b7cff]/45 hover:bg-[#8b7cff]/[.06] disabled:opacity-50">
+          <button disabled={!!busy} onClick={() => choosePreset(selectedPreset, 'solo')} className="group rounded-[20px] border border-white/[.09] bg-white/[.025] p-5 text-left transition hover:-translate-y-0.5 hover:border-[#8b7cff]/45 hover:bg-[#8b7cff]/[.06] disabled:opacity-50">
             <span className="grid h-10 w-10 place-items-center rounded-xl border border-[#8b7cff]/20 bg-[#8b7cff]/10 text-[#a99dff]">01</span>
             <span className="mt-5 block text-lg font-semibold">Play solo</span>
             <span className="mt-2 block text-xs leading-5 text-[#747c8f]">A private, unlisted run. NPC companions fill missing roles without taking over your choices.</span>
             <span className="mt-5 flex items-center justify-between text-xs font-semibold text-[#a99dff]">{busy ? 'Building your run…' : 'Begin alone'} <span className="transition group-hover:translate-x-1">→</span></span>
           </button>
-          <button disabled={!!busy} onClick={() => openPreset(selectedPreset.name, 'group')} className="group rounded-[20px] border border-[#6ee7f2]/15 bg-[#6ee7f2]/[.025] p-5 text-left transition hover:-translate-y-0.5 hover:border-[#6ee7f2]/40 hover:bg-[#6ee7f2]/[.055] disabled:opacity-50">
+          <button disabled={!!busy} onClick={() => choosePreset(selectedPreset, 'group')} className="group rounded-[20px] border border-[#6ee7f2]/15 bg-[#6ee7f2]/[.025] p-5 text-left transition hover:-translate-y-0.5 hover:border-[#6ee7f2]/40 hover:bg-[#6ee7f2]/[.055] disabled:opacity-50">
             <span className="grid h-10 w-10 place-items-center rounded-xl border border-[#6ee7f2]/20 bg-[#6ee7f2]/10 text-[#76dce8]">02</span>
             <span className="mt-5 block text-lg font-semibold">Play with others</span>
             <span className="mt-2 block text-xs leading-5 text-[#747c8f]">A shared world friends can join. Visible actions, clues, and scene consequences become co-op canon.</span>
@@ -155,5 +198,6 @@ export default function JoinPage() {
         </div>
       </section>
     </div>}
+    {trailerChoice && <PresetCinematicTrailer trailerId={PRESET_TRAILERS[trailerChoice.preset.name].id} title={trailerChoice.preset.name} onComplete={completeTrailer} />}
   </main>;
 }
